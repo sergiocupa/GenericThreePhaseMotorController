@@ -1,6 +1,6 @@
 # GenericThreePhaseMotorController
 
-The software is generic and can be used for both synchronous and asynchronous motors. One example of an application is BLDC synchronous motors (used in drones). In this case, since precise positioning is not required, the drive can be configured for use without an encoder.
+The software is generic and can be used for synchronous or asynchronous motors. One example of an application is BLDC synchronous motors (used in drones). In this case, since precise positioning is not required, the drive can be configured for use without an encoder.
 
 For synchronous mode, it is also possible to use servomotors with encoders (common in robotics). In this application, it is necessary to ensure torque for large movement impulses and precise positioning.
 
