@@ -1,2 +1,2 @@
 # GenericThreePhaseMotorController
-Drive para motor de três fazes. Para motor síncrono e assíncrono.
+Drive for three-phase motor. For synchronous and asynchronous motor.
