@@ -10,6 +10,8 @@
 #include "usb_device.h"
 #include "usbd_cdc.h"
 
+DMA_HandleTypeDef hdma_adc1 = {0};
+
 
 #ifdef  USE_FULL_ASSERT
 /**
@@ -221,37 +223,13 @@ void MX_TIM1_Init(void)
 
 
 
-void USB_CDC_Init(TransmissionCompletedCallback transmission_completed)
-{
-	MX_USB_DEVICE_Init(transmission_completed);
 
-    // ...
-}
-
-
-void MX_USB_PCD_Init(void)
-{
-	PCD_HandleTypeDef hpcd_USB_FS = {0};
-
-    hpcd_USB_FS.Instance                     = USB;
-    hpcd_USB_FS.Init.dev_endpoints           = 8;
-    hpcd_USB_FS.Init.speed                   = PCD_SPEED_FULL;
-    hpcd_USB_FS.Init.low_power_enable        = DISABLE;
-    hpcd_USB_FS.Init.lpm_enable              = DISABLE;
-    hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
-
-    if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
-    {
-        Error_Handler();
-    }
-}
 
 
 void MX_ADC_DMA_Init(ADC_HandleTypeDef *hadc1)
 {
 	__HAL_RCC_DMA1_CLK_ENABLE();
 
-	DMA_HandleTypeDef hdma_adc1 = {0};
 	hdma_adc1.Instance                 = DMA1_Channel1;
 	hdma_adc1.Init.Direction           = DMA_PERIPH_TO_MEMORY;
 	hdma_adc1.Init.PeriphInc           = DMA_PINC_DISABLE;
@@ -310,8 +288,7 @@ void three_phase_drive_prepare(ThreePhaseDriveData *instance)
 
     MX_TIM1_Init();
 
-    MX_USB_PCD_Init();
-    USB_CDC_Init(OnTransmissionCompleted);
+
 
 	HAL_ADC_Start_DMA(&hadc1, instance->AdcCurrent, 1); // Inicia ADC1 com DMA (dual mode)
 }
