@@ -27,16 +27,6 @@ namespace WinFormsApp1
             }
         }
 
-        public void Configure(double max_x = 10, double scale_x = 1, double scale_y = 1, double step_x = 1, double step_y = 1)
-        {
-            MaxX   = max_x;
-            //MaxY   = max_y;
-            ScaleX = scale_x;
-            ScaleY = scale_y;
-            StepX  = step_y;
-            StepY  = step_y;
-        }
-
         public void CreateSerie(string name, SerieLineType line_type = SerieLineType.Line, Color? color = null, float thickness = 1)
         {
             var serie = new SerieChart() { Name = name, LineType = line_type, Color = color, Thickness = thickness };
@@ -73,7 +63,9 @@ namespace WinFormsApp1
                     visibles = serie.Points.Where(w => (w.X >= left_x && w.X <= right_x) && (w.Y >= ValueMinY && w.Y <= ValueMaxY)).ToArray();
                 }
 
-                if(visibles.Length > 1)
+                var last = serie.Points.LastOrDefault();
+
+                if (visibles.Length > 1)
                 {
                     var x_min   = visibles.Min(m => m.X);
                     var x_max   = visibles.Max(m => m.X);
@@ -85,9 +77,9 @@ namespace WinFormsApp1
                     var propo_w = info.AxisX.ScreenSize / x_range;
                     var propo_h = info.AxisY.ScreenSize / y_range;
 
-                    var first  = visibles[0];
-                    var prev_x = info.AxisX.ScreenStart + ((first.X - x_min) * propo_w);
-                    var prev_y = info.AxisY.ScreenEnd   - ((first.Y - y_min) * propo_h);
+                    var first   = visibles[0];
+                    var prev_x  = info.AxisX.ScreenStart + ((first.X - (x_min < 0 ? x_min : 0)) * propo_w);
+                    var prev_y  = info.AxisY.ScreenEnd   - ((first.Y - (y_min < 0 ? y_min : 0)) * propo_h);
 
                     var pen = new Pen(serie.Color.Value, serie.Thickness);
 
@@ -95,8 +87,8 @@ namespace WinFormsApp1
                     while (ix < visibles.Length)
                     {
                         var point = visibles[ix];
-                        var pos_x = info.AxisX.ScreenStart + ((point.X - x_min) * propo_w);
-                        var pos_y = info.AxisY.ScreenEnd   - ((point.Y - y_min) * propo_h);
+                        var pos_x = info.AxisX.ScreenStart + ((point.X - (x_min < 0 ? x_min : 0)) * propo_w);
+                        var pos_y = info.AxisY.ScreenEnd   - ((point.Y - (y_min < 0 ? y_min : 0)) * propo_h);
 
                         g.DrawLine(pen, (float)prev_x, (float)prev_y, (float)pos_x, (float)pos_y);
 
@@ -173,7 +165,7 @@ namespace WinFormsApp1
                 info.AxisX.ValueStep = RangeX / (Columns - 1);
             }
 
-            info.AxisY.ValueStep = RangeY / (Lines - 1);
+            info.AxisY.ValueStep   = RangeY / (Lines - 1);
 
             info.AxisX.ScreenStart = LineValueRight ? MarginX : TextAreaX + MarginX;
             info.AxisX.ScreenEnd   = Width - (LineValueRight ? TextAreaX + MarginX : MarginX);
@@ -196,26 +188,16 @@ namespace WinFormsApp1
             Invalidate();
         }
 
-        private double RangeX;
-        private double RangeY;
-        private double ValueMinX;
-        private double ValueMaxX;
-        private double ValueMinY;
-        private double ValueMaxY;
 
-        private double StepX;
-        private double StepY;
+        public double RangeX;
+        public double RangeY;
+        public double ValueMinX;
+        public double ValueMaxX;
+        public double ValueMinY;
+        public double ValueMaxY;
 
-        private double OffsetX;
 
-        private double MinX;
         private double MaxX;
-        private double MinY;
-        private double _MaxY;
-
-        private double ScaleX;
-        private double ScaleY;
-        
         private double Lines;
         private double Columns;
         private double MarginX;
@@ -240,12 +222,6 @@ namespace WinFormsApp1
             Series = new Dictionary<string, SerieChart>();
 
             MaxX   = 10;
-            //MaxY   = 10;
-
-            ScaleX = 1;
-            ScaleY = 1;
-            StepX  = 1; 
-            StepY  = 1;
 
             Lines   = 11;
             Columns = 10;
