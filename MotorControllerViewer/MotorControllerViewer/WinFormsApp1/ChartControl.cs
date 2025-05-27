@@ -15,12 +15,32 @@ namespace WinFormsApp1
                 if (y < ValueMinY) ValueMinY = y;
                 if (y > ValueMaxY) ValueMaxY = y;
 
+                if (ValueMinX > 0 && ValueMaxX > 0) ValueMinX = 0;
+                if (ValueMinX < 0 && ValueMaxX < 0) ValueMaxX = 0;
+                if (ValueMinY > 0 && ValueMaxY > 0) ValueMinY = 0;
+                if (ValueMinY < 0 && ValueMaxY < 0) ValueMaxY = 0;
+
                 RangeX = ValueMaxX - ValueMinX;
                 RangeY = ValueMaxY - ValueMinY;
 
-                lock(ChartLock)
+
+                if (x < serie.ValueMinX) serie.ValueMinX = x;
+                if (x > serie.ValueMaxX) serie.ValueMaxX = x;
+                if (y < serie.ValueMinY) serie.ValueMinY = y;
+                if (y > serie.ValueMaxY) serie.ValueMaxY = y;
+
+                if (serie.ValueMinX > 0 && serie.ValueMaxX > 0) serie.ValueMinX = 0;
+                if (serie.ValueMinX < 0 && serie.ValueMaxX < 0) serie.ValueMaxX = 0;
+                if (serie.ValueMinY > 0 && serie.ValueMaxY > 0) serie.ValueMinY = 0;
+                if (serie.ValueMinY < 0 && serie.ValueMaxY < 0) serie.ValueMaxY = 0;
+
+                serie.RangeX = serie.ValueMaxX - serie.ValueMinX;
+                serie.RangeY = serie.ValueMaxY - serie.ValueMinY;
+
+
+                lock (ChartLock)
                 {
-                    serie.Points.Add(new PointChart() { X = x, Y = y });
+                    serie.Points.Add(new PointChart() { X = x, Y = y, Index = (ulong)serie.Points.Count });
                 }
                 
                 Invalidate();
@@ -43,57 +63,91 @@ namespace WinFormsApp1
         {
             base.OnPaint(e);
             var g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
             var info = PrepareAxis();
             PlotGrid(info, g);
 
+            var displayX   = (RangeX > MaxX) ? MaxX : RangeX;
+            var propo_x    = info.AxisX.ScreenSize / displayX;
+            var propo_y    = info.AxisY.ScreenSize / RangeY;
+
+            var left_x  = ValueMinX;
+            var right_x = ValueMaxX;
+            if(RangeX > MaxX)
+            {
+                left_x = ValueMaxX - MaxX;
+            }
+
             foreach (var serie in Series.Values)
             {
-                var left_x  = ValueMinX;
-                var right_x = ValueMaxX;
-
-                if (RangeX > MaxX)
-                {
-                    left_x = ValueMaxX - MaxX;
-                }
-
                 var visibles = new PointChart[0];
                 lock (ChartLock) 
                 {
-                    visibles = serie.Points.Where(w => (w.X >= left_x && w.X <= right_x) && (w.Y >= ValueMinY && w.Y <= ValueMaxY)).ToArray();
+                    visibles = serie.Points.Where(w => w.X >= left_x && w.X <= right_x).ToArray();
                 }
 
                 var last = serie.Points.LastOrDefault();
 
-                if (visibles.Length > 1)
+                if (visibles.Length > 0)
                 {
-                    var x_min   = visibles.Min(m => m.X);
-                    var x_max   = visibles.Max(m => m.X);
-                    var y_min   = visibles.Min(m => m.Y);
-                    var y_max   = visibles.Max(m => m.Y);
-                    var x_range = x_max - (x_min < 0 ? x_min : 0);
-                    var y_range = y_max - (y_min < 0 ? y_min : 0);
+                    var first = visibles[0];
 
-                    var propo_w = info.AxisX.ScreenSize / x_range;
-                    var propo_h = info.AxisY.ScreenSize / y_range;
+                    int ix = 0;
+                    double prev_x = 0, prev_y = 0;
+                    if(first.Index > 0)
+                    {
+                        PointChart before = null;
+                        lock (ChartLock)
+                        {
+                            before = serie.Points[(int)first.Index - 1];
+                        }
 
-                    var first   = visibles[0];
-                    var prev_x  = info.AxisX.ScreenStart + ((first.X - (x_min < 0 ? x_min : 0)) * propo_w);
-                    var prev_y  = info.AxisY.ScreenEnd   - ((first.Y - (y_min < 0 ? y_min : 0)) * propo_h);
+                        if (before.X < left_x)  // Ponto anterior está fora da tela 
+                        {
+                            // Faz interpolação linear para encontrar ponto na borda
+                            double dx = first.X - before.X;
+                            double dy = first.Y - before.Y;
+                            double ratio = (left_x - before.X) / dx;
+
+                            double interp_x = left_x;
+                            double interp_y = before.Y + ratio * dy;
+
+                            prev_x = info.AxisX.ScreenStart;
+                            prev_y = info.AxisY.ScreenEnd - ((interp_y - ValueMinY) * propo_y);
+                        }
+                        else
+                        {
+                            prev_x = info.AxisX.ScreenStart + ((before.X - left_x) * propo_x);
+                            prev_y = info.AxisY.ScreenEnd - ((before.Y - ValueMinY) * propo_y);
+                        }
+                    }
+                    else
+                    {
+                        prev_x = info.AxisX.ScreenStart + ((first.X - left_x) * propo_x);
+                        prev_y = info.AxisY.ScreenEnd - ((first.Y - ValueMinY) * propo_y);
+                        ix = 1;
+                    }
 
                     var pen = new Pen(serie.Color.Value, serie.Thickness);
 
-                    int ix = 1;
                     while (ix < visibles.Length)
                     {
                         var point = visibles[ix];
-                        var pos_x = info.AxisX.ScreenStart + ((point.X - (x_min < 0 ? x_min : 0)) * propo_w);
-                        var pos_y = info.AxisY.ScreenEnd   - ((point.Y - (y_min < 0 ? y_min : 0)) * propo_h);
+                        var pos_x = info.AxisX.ScreenStart + ((point.X - left_x) * propo_x);
+                        var pos_y = info.AxisY.ScreenEnd   - ((point.Y - ValueMinY) * propo_y);
 
-                        g.DrawLine(pen, (float)prev_x, (float)prev_y, (float)pos_x, (float)pos_y);
+                        var delta_x = pos_x - prev_x;
+                        var delta_y = pos_y - prev_y;
 
-                        prev_x = pos_x;
-                        prev_y = pos_y;
+                        if (delta_x <= -2 || delta_x >= 2 || delta_y <= -2 || delta_y >= 2)// Nao renderiza se diferenca pequena.
+                        {
+                            g.DrawLine(pen, (float)prev_x, (float)prev_y, (float)pos_x, (float)pos_y);
+
+                            prev_x = pos_x;
+                            prev_y = pos_y;
+                        }
+                       
                         ix++;
                     }
 
@@ -101,6 +155,7 @@ namespace WinFormsApp1
                 }
             }
         }
+
 
         private void PlotGrid(CoordInfo info, Graphics g)
         {
@@ -113,7 +168,7 @@ namespace WinFormsApp1
             int i = 0;
             while (i < Columns)
             {
-                var pos = (float)(info.AxisX.ScreenStart + (i * info.AxisX.ScreenStep));
+                var pos   = (float)(info.AxisX.ScreenStart + (i * info.AxisX.ScreenStep));
                 var value = info.AxisX.ValueStart + (info.AxisX.ValueStep * i);
 
                 g.DrawLine(line_pen, pos, (float)info.AxisY.ScreenStart, pos, (float)info.AxisY.ScreenEnd);
@@ -149,21 +204,19 @@ namespace WinFormsApp1
             }
         }
 
+
         private CoordInfo PrepareAxis()
         {
             CoordInfo info = new CoordInfo();
 
-            if (RangeX > MaxX)
-            {
-                var rx = RangeX - MaxX;
-                info.AxisX.ValueStart = ValueMinX + rx;
-                info.AxisX.ValueStep = rx / (Columns - 1);
-            }
-            else
-            {
-                info.AxisX.ValueStart = ValueMinX;
-                info.AxisX.ValueStep = RangeX / (Columns - 1);
-            }
+            // quanto de X cabe na área visível
+            var displayRangeX = Math.Min(RangeX, MaxX);
+
+            // origem em X: se rolou, começa em ValueMaxX-MaxX
+            info.AxisX.ValueStart = (RangeX > MaxX) ? (ValueMaxX - MaxX) : ValueMinX;
+
+            // passo de cada coluna sempre sobre o displayRangeX
+            info.AxisX.ValueStep = displayRangeX / (Columns - 1);
 
             info.AxisY.ValueStep   = RangeY / (Lines - 1);
 
@@ -179,7 +232,6 @@ namespace WinFormsApp1
 
             return info;
         }
-
 
 
         protected override void OnResize(EventArgs e)

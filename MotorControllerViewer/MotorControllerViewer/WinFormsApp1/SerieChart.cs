@@ -11,6 +11,17 @@ namespace WinFormsApp1
         public Color? Color;
         public List<PointChart> Points;
 
+        public double RangeX;
+        public double RangeY;
+        public double ValueMinX;
+        public double ValueMaxX;
+        public double ValueMinY;
+        public double ValueMaxY;
+
+        public double StepX;
+        public double StepY;
+
+
         public SerieChart()
         {
             LineType = SerieLineType.None;

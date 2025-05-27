@@ -13,15 +13,26 @@ namespace WinFormsApp1
                     Pheta += 0.01;
 
                     var X = 10 * Math.Cos(Pheta);
-                    var Y = 10 * Math.Cos(Pheta);
+                    var Y = 10 * Math.Sin(Pheta);
+            
+                    Chart.CreatePoint("R", Pheta, X);
+                    Chart.CreatePoint("S", Pheta, Y);
 
-                    Chart.CreatePoint("R", Pheta, Y);
+                    //Chart.CreatePoint("R", 0, 5);
+                   // Chart.CreatePoint("R", 12, 8);
+                    //Chart.CreatePoint("R", 12, 5);
 
                     //Chart.CreatePoint("R", 0, 5);
                     //Chart.CreatePoint("R", 5, 10);
                     //Chart.CreatePoint("R", 6, 8);
-                    //Chart.CreatePoint("R", 7, 2);
+                    //Chart.CreatePoint("R", 12, 2);
                     //Chart.CreatePoint("R", 6, -1);
+
+                    //Chart.CreatePoint("S", 4, 4);
+                   // Chart.CreatePoint("S", 6, 3);
+                    //Chart.CreatePoint("S", 3, 6);
+                    //Chart.CreatePoint("S", 5, 1);
+                    //Chart.CreatePoint("S", 4, -2);
 
                     //Chart.CreatePoint("R", 0, 5);
                     //Chart.CreatePoint("R", 5, -5);
@@ -30,7 +41,7 @@ namespace WinFormsApp1
                     //Chart.CreatePoint("R", 10, 5);
 
                     //Chart.Append(Pheta, Y, "1");
-                    Thread.Sleep(1);
+                    //Thread.Sleep(1);
                     //break;
                 }
             }
@@ -57,6 +68,8 @@ namespace WinFormsApp1
             Chart = new ChartControl() { Dock = DockStyle.Fill };
 
             Chart.CreateSerie("R");
+            Chart.CreateSerie("S");
+            Chart.CreateSerie("T");
 
 
             panel2.Controls.Add(Chart);
