@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace WinFormsApp1
 {
     internal static class Program
@@ -8,6 +10,8 @@ namespace WinFormsApp1
         [STAThread]
         static void Main()
         {
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();

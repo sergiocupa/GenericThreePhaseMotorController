@@ -8,8 +8,7 @@
 #include "three_phase_drive_runner.h"
 #include "three_phase_drive_preparer.h"
 #include "logger.h"
-//#include "usb_device.h"
-//#include "usbd_cdc.h"
+
 
 DMA_HandleTypeDef hdma_adc1 = {0};
 
@@ -288,12 +287,12 @@ void three_phase_drive_prepare(ThreePhaseDriveData *instance)
 	logger_init(LOGGER_COMM_USB);
 
 	MX_GPIO_Init();
-//
-//	ADC_HandleTypeDef hadc1 = {0};
-//	ADC_HandleTypeDef hadc2 = {0};
-//	MX_ADC1_Init(&hadc1);
-//	MX_ADC_DMA_Init(&hadc1);
-//	MX_ADC2_Init(&hadc2);
+
+	//ADC_HandleTypeDef hadc1 = {0};
+	//ADC_HandleTypeDef hadc2 = {0};
+	//MX_ADC1_Init(&hadc1);
+	//MX_ADC_DMA_Init(&hadc1);
+	//MX_ADC2_Init(&hadc2);
 //
 //    MX_TIM1_Init();
 //

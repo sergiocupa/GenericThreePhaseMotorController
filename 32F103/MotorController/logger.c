@@ -6,7 +6,7 @@
 #include <stdarg.h>
 
 
-#define USB_TX_BUFFER_SIZE 1024
+#define USB_TX_BUFFER_SIZE 4096
 #define BUFFER_SEND_SIZE   100
 
 static int   MAX_BUFFER_OCCUPANCY = (int)((float)USB_TX_BUFFER_SIZE * 0.85f);
@@ -24,6 +24,8 @@ static char buffer_send_format[BUFFER_SEND_SIZE];
 
 void logger_send(const ulong cnt, const char* format, ...)
 {
+	// Se nao imprimir float, entao
+	//    Project → Properties → C/C++ Build → Settings → MCU GCC Linker → Miscellaneous → -u _printf_float.
 	after_counter_leng = sprintf(buffer_send_format, "0:%lu|", cnt);
 
 	va_list ap;

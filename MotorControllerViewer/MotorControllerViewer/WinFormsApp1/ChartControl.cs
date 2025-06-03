@@ -1,4 +1,7 @@
 ﻿using CapturaTestesGUI.Utils;
+using System;
+using System.Reflection;
+using System.Xml.Linq;
 
 namespace WinFormsApp1
 {
@@ -6,45 +9,71 @@ namespace WinFormsApp1
     public class ChartControl : Control
     {
 
+        public void CreatePoint(int index, double x, double y)
+        {
+            if (SeriesIndex.TryGetValue(index, out SerieChart serie))
+            {
+                CreatePoint(serie, x, y);
+            }
+        }
+
         public void CreatePoint(string name, double x, double y)
         {
-            if(Series.TryGetValue(name, out SerieChart serie))
+            if (Series.TryGetValue(name, out SerieChart serie))
             {
-                if (x < ValueMinX) ValueMinX = x;
-                if (x > ValueMaxX) ValueMaxX = x;
-                if (y < ValueMinY) ValueMinY = y;
-                if (y > ValueMaxY) ValueMaxY = y;
-
-                if (ValueMinX > 0 && ValueMaxX > 0) ValueMinX = 0;
-                if (ValueMinX < 0 && ValueMaxX < 0) ValueMaxX = 0;
-                if (ValueMinY > 0 && ValueMaxY > 0) ValueMinY = 0;
-                if (ValueMinY < 0 && ValueMaxY < 0) ValueMaxY = 0;
-
-                RangeX = ValueMaxX - ValueMinX;
-                RangeY = ValueMaxY - ValueMinY;
-
-
-                if (x < serie.ValueMinX) serie.ValueMinX = x;
-                if (x > serie.ValueMaxX) serie.ValueMaxX = x;
-                if (y < serie.ValueMinY) serie.ValueMinY = y;
-                if (y > serie.ValueMaxY) serie.ValueMaxY = y;
-
-                if (serie.ValueMinX > 0 && serie.ValueMaxX > 0) serie.ValueMinX = 0;
-                if (serie.ValueMinX < 0 && serie.ValueMaxX < 0) serie.ValueMaxX = 0;
-                if (serie.ValueMinY > 0 && serie.ValueMaxY > 0) serie.ValueMinY = 0;
-                if (serie.ValueMinY < 0 && serie.ValueMaxY < 0) serie.ValueMaxY = 0;
-
-                serie.RangeX = serie.ValueMaxX - serie.ValueMinX;
-                serie.RangeY = serie.ValueMaxY - serie.ValueMinY;
-
-
-                lock (ChartLock)
-                {
-                    serie.Points.Add(new PointChart() { X = x, Y = y, Index = (ulong)serie.Points.Count });
-                }
-                
-                Invalidate();
+                CreatePoint(serie, x, y);
             }
+        }
+
+        public void CreatePoint(SerieChart serie, double x, double y)
+        {
+            if (x < ValueMinX) ValueMinX = x;
+            if (x > ValueMaxX) ValueMaxX = x;
+            if (y < ValueMinY) ValueMinY = y;
+            if (y > ValueMaxY) ValueMaxY = y;
+
+            if (ValueMinX > 0 && ValueMaxX > 0) ValueMinX = 0;
+            if (ValueMinX < 0 && ValueMaxX < 0) ValueMaxX = 0;
+            if (ValueMinY > 0 && ValueMaxY > 0) ValueMinY = 0;
+            if (ValueMinY < 0 && ValueMaxY < 0) ValueMaxY = 0;
+
+            RangeX = ValueMaxX - ValueMinX;
+            RangeY = ValueMaxY - ValueMinY;
+
+
+            if (x < serie.ValueMinX) serie.ValueMinX = x;
+            if (x > serie.ValueMaxX) serie.ValueMaxX = x;
+            if (y < serie.ValueMinY) serie.ValueMinY = y;
+            if (y > serie.ValueMaxY) serie.ValueMaxY = y;
+
+            if (serie.ValueMinX > 0 && serie.ValueMaxX > 0) serie.ValueMinX = 0;
+            if (serie.ValueMinX < 0 && serie.ValueMaxX < 0) serie.ValueMaxX = 0;
+            if (serie.ValueMinY > 0 && serie.ValueMaxY > 0) serie.ValueMinY = 0;
+            if (serie.ValueMinY < 0 && serie.ValueMaxY < 0) serie.ValueMaxY = 0;
+
+            serie.RangeX = serie.ValueMaxX - serie.ValueMinX;
+            serie.RangeY = serie.ValueMaxY - serie.ValueMinY;
+
+
+            lock (ChartLock)
+            {
+                serie.Points.Add(new PointChart() { X = x, Y = y, Index = (ulong)serie.Points.Count });
+            }
+
+            Invalidate();
+        }
+
+        public void CreateSerie(int index, SerieLineType line_type = SerieLineType.Line, Color? color = null, float thickness = 1)
+        {
+            var serie = new SerieChart() { Index = index, LineType = line_type, Color = color, Thickness = thickness };
+
+            if (!color.HasValue)
+            {
+                serie.Color = ColorGenerator.Create();
+            }
+
+            SeriesIndex.Add(index, serie);
+            Series.Add(index.ToString(), serie);
         }
 
         public void CreateSerie(string name, SerieLineType line_type = SerieLineType.Line, Color? color = null, float thickness = 1)
@@ -57,6 +86,24 @@ namespace WinFormsApp1
             }
 
             Series.Add(name, serie);
+            SeriesIndex.Add(Series.Count, serie);
+        }
+
+        public SerieChart GetSerie(int index)
+        {
+            if (SeriesIndex.TryGetValue(index, out SerieChart serie))
+            {
+                return serie;
+            }
+            return null;
+        }
+        public SerieChart GetSerie(string name)
+        {
+            if (Series.TryGetValue(name, out SerieChart serie))
+            {
+                return serie;
+            }
+            return null;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -85,6 +132,12 @@ namespace WinFormsApp1
                 lock (ChartLock) 
                 {
                     visibles = serie.Points.Where(w => w.X >= left_x && w.X <= right_x).ToArray();
+
+                    if (RemoveNonVisible)
+                    {
+                        var outside = serie.Points.Where(w => !(w.X >= left_x && w.X <= right_x));
+                        serie.Points.RemoveRange(0, serie.Points.Count - outside.Count());
+                    }
                 }
 
                 var last = serie.Points.LastOrDefault();
@@ -210,13 +263,13 @@ namespace WinFormsApp1
             CoordInfo info = new CoordInfo();
 
             // quanto de X cabe na área visível
-            var displayRangeX = Math.Min(RangeX, MaxX);
+            var displayRangeX      = Math.Min(RangeX, MaxX);
 
             // origem em X: se rolou, começa em ValueMaxX-MaxX
-            info.AxisX.ValueStart = (RangeX > MaxX) ? (ValueMaxX - MaxX) : ValueMinX;
+            info.AxisX.ValueStart  = (RangeX > MaxX) ? (ValueMaxX - MaxX) : ValueMinX;
 
             // passo de cada coluna sempre sobre o displayRangeX
-            info.AxisX.ValueStep = displayRangeX / (Columns - 1);
+            info.AxisX.ValueStep   = displayRangeX / (Columns - 1);
 
             info.AxisY.ValueStep   = RangeY / (Lines - 1);
 
@@ -241,14 +294,14 @@ namespace WinFormsApp1
         }
 
 
-        public double RangeX;
-        public double RangeY;
-        public double ValueMinX;
-        public double ValueMaxX;
-        public double ValueMinY;
-        public double ValueMaxY;
+        public bool RemoveNonVisible;
 
-
+        private double RangeX;
+        private double RangeY;
+        private double ValueMinX;
+        private double ValueMaxX;
+        private double ValueMinY;
+        private double ValueMaxY;
         private double MaxX;
         private double Lines;
         private double Columns;
@@ -256,22 +309,26 @@ namespace WinFormsApp1
         private double MarginY;
         private double TextAreaX;
         private double TextAreaY;
+        private bool   LineValueRight = false;
+        private bool   ColumnValueTop = false;
+        private ChartControlLock ChartLock;
+        private Dictionary<string, SerieChart> Series;
+        private Dictionary<int, SerieChart> SeriesIndex;
 
-        private bool LineValueRight = false;
-        private bool ColumnValueTop = false;
 
-        public Font DEFAULT_FONT = new Font("Arial", 8);
-        public Color DEFAULT_FONT_COLOR = Color.FromArgb(160, 180, 200);
+        public Font   DEFAULT_FONT = new Font("Arial", 8);
+        public Color  DEFAULT_FONT_COLOR = Color.FromArgb(160, 180, 200);
         public string FormatX = "0.00";
         public string FormatY = "0.00";
-        ChartControlLock ChartLock;
-        private Dictionary<string, SerieChart> Series;
+        
 
         public ChartControl()
         {
-            DoubleBuffered = true;
+            DoubleBuffered   = true;
+            RemoveNonVisible = false;
 
-            Series = new Dictionary<string, SerieChart>();
+            Series      = new Dictionary<string, SerieChart>();
+            SeriesIndex = new Dictionary<int, SerieChart>();
 
             MaxX   = 10;
 
