@@ -8,5 +8,6 @@ The software will also support use with large asynchronous induction motors, and
 
 The image below is of a Windows app that I implemented to monitor the generated phases and calculations of the FOC control. It is also to monitor any microcontroller variable. The app captures logs via USB port.
 ![Waves of the 3 phases](resources/waves.jpg)
+![Table](resources/table.jpg)
 
 After this phase of debugging the controls, I will post my progress in implementing the drive hardware.
