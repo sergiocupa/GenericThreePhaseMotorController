@@ -37,8 +37,6 @@
             label3 = new Label();
             ArquivoButton = new Button();
             label2 = new Label();
-            label1 = new Label();
-            textBox2 = new TextBox();
             FileTextBox = new TextBox();
             button1 = new Button();
             tableLayoutPanel1.SuspendLayout();
@@ -117,8 +115,6 @@
             panel1.Controls.Add(label3);
             panel1.Controls.Add(ArquivoButton);
             panel1.Controls.Add(label2);
-            panel1.Controls.Add(label1);
-            panel1.Controls.Add(textBox2);
             panel1.Controls.Add(FileTextBox);
             panel1.Controls.Add(button1);
             panel1.Dock = DockStyle.Fill;
@@ -156,23 +152,6 @@
             label2.Size = new Size(52, 15);
             label2.TabIndex = 4;
             label2.Text = "Arquivo:";
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(117, 12);
-            label1.Name = "label1";
-            label1.Size = new Size(38, 15);
-            label1.TabIndex = 3;
-            label1.Text = "Porta:";
-            // 
-            // textBox2
-            // 
-            textBox2.Location = new Point(158, 9);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(75, 23);
-            textBox2.TabIndex = 2;
-            textBox2.Text = "COM4";
             // 
             // FileTextBox
             // 

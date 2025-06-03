@@ -60,7 +60,7 @@ namespace WinFormsApp1
                 {
                     button1.Enabled = false;
 
-                    Serial = new SerialPort(textBox2.Text, 9600, Parity.None, 8, StopBits.One);
+                    Serial = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
 
                     Serial.DataReceived += (object sender, SerialDataReceivedEventArgs e) =>
                     {
