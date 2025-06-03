@@ -6,4 +6,7 @@ For synchronous mode, it is also possible to use servomotors with encoders (comm
 
 The software will also support use with large asynchronous induction motors, and can be configured with FOC, VF control, or a combination of both. The IGBT activation dead time can be configured. This configuration is necessary to ensure that there is no unwanted short circuit in the activation cycle, caused by a delay in the IGBT deactivation times.
 
+The image below is of a Windows app that I implemented to monitor the generated phases and calculations of the FOC control. It is also to monitor any microcontroller variable. The app captures logs via USB port.
 ![Waves of the 3 phases](resources/waves.jpg)
+
+After this phase of debugging the controls, I will post my progress in implementing the drive hardware.
