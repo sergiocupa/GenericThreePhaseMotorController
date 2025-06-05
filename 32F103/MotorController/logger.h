@@ -35,8 +35,7 @@ LoggerParam;
 
 
 void logger_init(LoggerCommunicationMode mode);
-//void logger_send(LoggerParam* params, uint param_count);
-void logger_send(ulong counter, const char* format, ...);
+void logger_send(const byte* data, int length);
 
 
 

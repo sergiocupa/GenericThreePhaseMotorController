@@ -13,6 +13,8 @@
 
 void OnTransmissionCompleted(uint8_t *Buf, uint32_t *Len, uint8_t epnum);
 
+
+void three_phase_drive_prepare(ThreePhaseDriveData *instance);
 void three_phase_drive_run(ThreePhaseDriveData *instance);
 
 

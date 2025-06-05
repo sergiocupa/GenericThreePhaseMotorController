@@ -223,9 +223,6 @@ void MX_TIM1_Init(void)
 
 
 
-
-
-
 //void MX_ADC_DMA_Init(ADC_HandleTypeDef *hadc1)
 //{
 ////	__HAL_RCC_DMA1_CLK_ENABLE();
@@ -245,7 +242,7 @@ void MX_TIM1_Init(void)
 //}
 
 
-static void MX_GPIO_Init(void)
+void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -279,27 +276,6 @@ void Error_Handler(void)
 
 
 
-void three_phase_drive_prepare(ThreePhaseDriveData *instance)
-{
-	HAL_Init();
-	SystemClock_Config();
-
-	logger_init(LOGGER_COMM_USB);
-
-	MX_GPIO_Init();
-
-	//ADC_HandleTypeDef hadc1 = {0};
-	//ADC_HandleTypeDef hadc2 = {0};
-	//MX_ADC1_Init(&hadc1);
-	//MX_ADC_DMA_Init(&hadc1);
-	//MX_ADC2_Init(&hadc2);
-//
-//    MX_TIM1_Init();
-//
-//
-//
-//	HAL_ADC_Start_DMA(&hadc1, instance->AdcCurrent, 1); // Inicia ADC1 com DMA (dual mode);
-}
 
 
 

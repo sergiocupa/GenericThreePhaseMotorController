@@ -1,5 +1,8 @@
 using CapturaTestesGUI.Utils;
+using Newtonsoft.Json.Linq;
+using System;
 using System.IO.Ports;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace WinFormsApp1
 {
@@ -11,44 +14,68 @@ namespace WinFormsApp1
         {
             Counter++;
 
-            var values = ValueParser.Parse(data);
+            var values = LogFrameParser.Parse(data);
 
             if (values.Count > 0)
             {
                 CountData += values.Count;
 
-                label3.Invoke(() => { label3.Text = "Rec: " + Counter + " | Total: " + CountData; });
+                var first = values.FirstOrDefault();
 
-                var first  = values.FirstOrDefault();
-                var series = first.Values.Select(s => Chart.GetSerie(s.Address)).Where(w => w != null).ToArray();
+                label3.Invoke(() => 
+                { 
+                    label3.Text = "Rec: " + Counter + " | Total: " + CountData + " | Freq.: " + first.Frequency + " | Tick: " + first.TicksByIteration; 
+                });
 
-                var freq  = first.Values.Where(s => s.Address == 5).FirstOrDefault();
-                var ticks = first.Values.Where(s => s.Address == 6).FirstOrDefault();
-                label3.Invoke(() => { label3.Text += " | Freq: " + freq.Value.ToString("0.0") + "Hz | Tick: " + ticks.Value; });
+                var SerieR = Chart.GetSerie(2);
+                var SerieS = Chart.GetSerie(3);
+                var SerieT = Chart.GetSerie(4);
 
-                foreach (var line in values)
+                int ix = 0;
+                while (ix < values.Count)
                 {
-                    // Se precisar, validar sequencia
+                    LogFrame line = values[ix];
 
-                    if(line.Values.Count > 0)
-                    {
-                        var axis = line.Values[0].Value;
+                    Chart.CreatePoint(SerieR, Motion, line.WaveR);
+                    Chart.CreatePoint(SerieS, Motion, line.WaveS);
+                    Chart.CreatePoint(SerieT, Motion, line.WaveT);
 
-                        int iz = 0;
-                        int ix = 1;
-                        while (ix < line.Values.Count && iz < series.Length)
-                        {
-                            var value = line.Values[ix];
-                            var serie = series[iz];
-                            if (serie != null)
-                            {
-                                Chart.CreatePoint(serie, axis, value.Value);
-                            }
-                            ix++;
-                            iz++;
-                        }
-                    }
+                    Motion += line.MotionStep;
+                    ix++;
                 }
+
+
+
+                //var first  = values.FirstOrDefault();
+                //var series = first.Values.Select(s => Chart.GetSerie(s.Address)).Where(w => w != null).ToArray();
+
+                //var freq = first.Values.Where(s => s.Address == 5).FirstOrDefault();
+                //var ticks = first.Values.Where(s => s.Address == 6).FirstOrDefault();
+                //label3.Invoke(() => { label3.Text += " | Freq: " + freq.Value.ToString("0.0") + "Hz | Tick: " + ticks.Value; });
+
+                //foreach (var line in values)
+                //{
+                //    // Se precisar, validar sequencia
+
+                //    if (line.Values.Count > 0)
+                //    {
+                //        var axis = line.Values[0].Value;
+
+                //        int iz = 0;
+                //        int ix = 1;
+                //        while (ix < line.Values.Count && iz < series.Length)
+                //        {
+                //            var value = line.Values[ix];
+                //            var serie = series[iz];
+                //            if (serie != null)
+                //            {
+                //                Chart.CreatePoint(serie, axis, value.Value);
+                //            }
+                //            ix++;
+                //            iz++;
+                //        }
+                //    }
+                //}
             }
         }
 
@@ -243,6 +270,7 @@ namespace WinFormsApp1
         private ActionQueue<byte[]> AQueue;
         private long Counter;
         private long CountData;
+        private double Motion;
         List<AdrressInfo> AddressTitles;
 
         public Form1()

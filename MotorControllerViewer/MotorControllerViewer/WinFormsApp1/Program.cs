@@ -2,19 +2,21 @@ using System.Globalization;
 
 namespace WinFormsApp1
 {
+
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture; // Define a cultura padrão para o aplicativo
 
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
+            //Application.ThreadException += new ThreadExceptionEventHandler(FormPrincipal_UIThreadException);  
+            //Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);  
+            //AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);  
+
+            Application.EnableVisualStyles(); // Substituído para corrigir o erro  
+            Application.SetCompatibleTextRenderingDefault(false); // Substituído para corrigir o erro  
+
             Application.Run(new Form1());
         }
     }
