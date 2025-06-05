@@ -1,8 +1,6 @@
 using CapturaTestesGUI.Utils;
-using Newtonsoft.Json.Linq;
-using System;
 using System.IO.Ports;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
+
 
 namespace WinFormsApp1
 {
@@ -43,39 +41,6 @@ namespace WinFormsApp1
                     Motion += line.MotionStep;
                     ix++;
                 }
-
-
-
-                //var first  = values.FirstOrDefault();
-                //var series = first.Values.Select(s => Chart.GetSerie(s.Address)).Where(w => w != null).ToArray();
-
-                //var freq = first.Values.Where(s => s.Address == 5).FirstOrDefault();
-                //var ticks = first.Values.Where(s => s.Address == 6).FirstOrDefault();
-                //label3.Invoke(() => { label3.Text += " | Freq: " + freq.Value.ToString("0.0") + "Hz | Tick: " + ticks.Value; });
-
-                //foreach (var line in values)
-                //{
-                //    // Se precisar, validar sequencia
-
-                //    if (line.Values.Count > 0)
-                //    {
-                //        var axis = line.Values[0].Value;
-
-                //        int iz = 0;
-                //        int ix = 1;
-                //        while (ix < line.Values.Count && iz < series.Length)
-                //        {
-                //            var value = line.Values[ix];
-                //            var serie = series[iz];
-                //            if (serie != null)
-                //            {
-                //                Chart.CreatePoint(serie, axis, value.Value);
-                //            }
-                //            ix++;
-                //            iz++;
-                //        }
-                //    }
-                //}
             }
         }
 
@@ -105,9 +70,6 @@ namespace WinFormsApp1
             }
 
             button1.Enabled = false;
-            //Running = true;
-            //Thr = new Thread(Run);
-            //Thr.Start();
         }
 
         private void ArquivoButton_Click(object sender, EventArgs e)
