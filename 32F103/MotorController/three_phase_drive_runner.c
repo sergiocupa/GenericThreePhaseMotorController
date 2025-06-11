@@ -7,6 +7,7 @@
 #include "stm32f1xx_hal.h"
 #include "three_phase_drive_preparer.h"
 #include "logger.h"
+#include "../32F103UsbDevice/usbd_cdc.h"
 #include <math.h>
 
 
@@ -67,9 +68,11 @@ void logger_voltages(float va, float vb, float vc)
 	if (CurrentFrame.Counter == UINT64_MAX) CurrentFrame.Counter = 0;
 	CurrentFrame.Counter++;
 
+	CurrentFrame.TicksByIteration = GetSentCounter();// logger_get_counter();
+
 	CurrentFrame.Adc01      = current_values[0];
 	CurrentFrame.Adc02      = current_values[1];
-	CurrentFrame.Adc03      = current_values[2];
+	CurrentFrame.Adc03      = logger_busy();//current_values[2];
 	CurrentFrame.Frequency  = Frequency;
 	CurrentFrame.MotionStep = MotionStep;
 	CurrentFrame.Theta      = Theta;
@@ -153,9 +156,15 @@ void three_phase_drive_run(ThreePhaseDriveData *instance)
 
 	DWT_Init();
 
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
+	HAL_Delay(50);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
+
 	while (1)
 	{
 		//HAL_Delay(1);
+		//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
+		//HAL_Delay(50);
 
 		get_adc_1_2(current_values);
 

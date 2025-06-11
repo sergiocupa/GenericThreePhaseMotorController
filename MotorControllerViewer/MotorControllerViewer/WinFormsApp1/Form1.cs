@@ -8,6 +8,8 @@ namespace WinFormsApp1
     public partial class Form1 : Form
     {
 
+        LogFrame Prev = new LogFrame();
+
         private void Received(byte[] data)
         {
             Counter++;
@@ -20,15 +22,27 @@ namespace WinFormsApp1
 
                 var first = values.FirstOrDefault();
 
+                //if(BufferCounter == 0)
+                //{
+                //    BufferCounter = first.Counter;
+                //}
+
                 label3.Invoke(() => 
                 { 
-                    label3.Text = "Rec: " + Counter + " | Total: " + CountData + " | Freq.: " + first.Frequency + " | Tick: " + first.TicksByIteration; 
+                    label3.Text = "Rec: " + Counter + " | Total: " + CountData + " | Freq.: " + first.Frequency + " | Tick: " + first.TicksByIteration + " | Jumps: " + BufferJumps;
+                    label3.Update();
                 });
 
                 var SerieR = Chart.GetSerie(2);
                 var SerieS = Chart.GetSerie(3);
                 var SerieT = Chart.GetSerie(4);
 
+                if (Prev.Counter > 0 && ((Prev.Counter + 1) != first.Counter))
+                {
+                    BufferJumps += (first.Counter - (Prev.Counter + 1));
+                }
+
+                int dif = 0;
                 int ix = 0;
                 while (ix < values.Count)
                 {
@@ -39,6 +53,20 @@ namespace WinFormsApp1
                     Chart.CreatePoint(SerieT, Motion, line.WaveT);
 
                     Motion += line.MotionStep;
+
+                    if (Prev.Counter > 0 && ((Prev.Counter+1) != line.Counter))
+                    {
+                        BufferJumps += (line.Counter - (Prev.Counter + 1));
+                    }
+
+                    //if(line.Counter != (BufferCounter + 1))
+                    //{
+                    //    BufferJumps += line.Counter - BufferCounter;
+                    //}
+
+                    //BufferCounter = line.Counter;
+
+                    Prev = line;
                     ix++;
                 }
             }
@@ -224,6 +252,26 @@ namespace WinFormsApp1
         }
 
 
+        private void Form1_FormClosing(object? sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                if(Serial != null)
+                {
+                    Serial.Close();
+                }
+
+                AQueue.Stop();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+
+
         private double Pheta;
         private ChartControl Chart;
         private Thread Thr;
@@ -234,10 +282,14 @@ namespace WinFormsApp1
         private long CountData;
         private double Motion;
         List<AdrressInfo> AddressTitles;
+        private long BufferJumps;
+        //private long BufferCounter;
 
         public Form1()
         {
             InitializeComponent();
+
+            FormClosing += Form1_FormClosing;
 
             Counter = 0;
 
@@ -250,6 +302,6 @@ namespace WinFormsApp1
             RenderTitles();
         }
 
-       
+        
     }
 }

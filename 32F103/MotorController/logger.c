@@ -1,64 +1,77 @@
 #include "logger.h"
-#include "usb_device.h"
-#include "usbd_cdc.h"
-#include "usbd_cdc_if.h"
+#include "../32F103UsbDevice/usb_device_32f103.h"
+#include "../32F103UsbDevice/usbd_cdc.h"
+
 #include "types.h"
-//#include <stdarg.h>
 
 
 #define USB_TX_BUFFER_SIZE 4096
 #define BUFFER_SEND_SIZE   100
 
-static int   MAX_BUFFER_OCCUPANCY = (int)((float)USB_TX_BUFFER_SIZE * 0.85f);
-static int   buffer_position      = 0;
-static byte  usb_tx_busy          = 0;
-static int   send_length          = 0;
+static   int   MAX_BUFFER_OCCUPANCY = (int)((float)USB_TX_BUFFER_SIZE * 0.85f);
+static   int   buffer_position      = 0;
+volatile byte  usb_tx_busy          = 0;
+volatile int   usb_sent_counter     = 0;
+static   int   send_length          = 0;
 
 static char usb_tx_buffer[USB_TX_BUFFER_SIZE];
 static byte usb_tx_temp[USB_TX_BUFFER_SIZE];
 
 
+
+float logger_busy()
+{
+	return usb_tx_busy;
+}
+int GetSentCounter()
+{
+	return usb_sent_counter;
+}
+
+
+void logger_transmit_complete()
+{
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
+	usb_sent_counter++;
+	usb_tx_busy = 0;
+}
+
+
 void logger_send(const byte* data, int length)
 {
-	// Se nao imprimir float, entao
-	//    Project → Properties → C/C++ Build → Settings → MCU GCC Linker → Miscellaneous → -u _printf_float.
-	//after_counter_leng = sprintf(buffer_send_format, "0:%lu|", cnt);
+	if((buffer_position + length) < USB_TX_BUFFER_SIZE)
+	{
+		memcpy(usb_tx_buffer + buffer_position, data, length);
+		buffer_position += length;
+	}
 
-	//va_list ap;
-	//va_start(ap, format);
-	//int len = vsnprintf(buffer_send_format + after_counter_leng, BUFFER_SEND_SIZE, format, ap);
-	//len += after_counter_leng;
-	//va_end(ap);
-
-	//buffer_send_format[len]   = '\n';
-	//buffer_send_format[len+1] = 0;
-
-	memcpy(usb_tx_buffer + buffer_position, data, length);
-	buffer_position += length;
-
-	if (buffer_position >= MAX_BUFFER_OCCUPANCY)// && !usb_tx_busy)
+	if ((buffer_position >= MAX_BUFFER_OCCUPANCY) && !usb_tx_busy)
 	{
 		send_length = buffer_position;
+
+//		int remainder = send_length % 64;
+//		if (remainder != 0)
+//		{
+//			int padding = 64 - remainder;
+//			memset(usb_tx_buffer + send_length, 0, padding);
+//			send_length += padding;
+//		}
+
 		memcpy(usb_tx_temp, usb_tx_buffer, send_length);
-		buffer_position = 0;
-		usb_tx_busy = 1;
-		usb_tx_temp[send_length] = 0;
-		CDC_Transmit_FS(usb_tx_temp, send_length);
+
+		if( CDC_Transmit_FS(usb_tx_temp, send_length) == USBD_OK)
+		{
+			usb_tx_busy     = 1;
+			buffer_position = 0;
+		}
 	}
 }
 
 
-
-void OnTransmissionCompleted(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
-{
-    usb_tx_busy = 0;
-}
-
-
-
 void USB_CDC_Init()
 {
-	MX_USB_DEVICE_Init(OnTransmissionCompleted);
+
+	MX_USB_DEVICE_Init();
 	//MX_USB_DEVICE_Init();
 
     // ...
@@ -92,7 +105,9 @@ void logger_init(LoggerCommunicationMode mode)
 	else if(mode == LOGGER_COMM_USB)
 	{
 		MX_USB_PCD_Init();
-		USB_CDC_Init(OnTransmissionCompleted);
+		USB_CDC_Init();
+
+		UsbTransmitComplete = logger_transmit_complete;
 	}
 	else if(mode == LOGGER_COMM_ETH)
 	{
