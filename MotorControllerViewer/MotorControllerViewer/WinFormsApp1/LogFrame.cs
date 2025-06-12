@@ -22,6 +22,12 @@ namespace WinFormsApp1
         public float WaveS;
         public float WaveT;
 
+        // Padding bytes to align the structure size to 64 bytes
+        public uint Pad1;
+        public uint Pad2;
+        public byte Pad3;
+        public byte Pad4;
+
         public override string ToString()
         {
             return "LogFrame: " +

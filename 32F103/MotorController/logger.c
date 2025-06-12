@@ -11,28 +11,14 @@
 static   int   MAX_BUFFER_OCCUPANCY = (int)((float)USB_TX_BUFFER_SIZE * 0.85f);
 static   int   buffer_position      = 0;
 volatile byte  usb_tx_busy          = 0;
-volatile int   usb_sent_counter     = 0;
 static   int   send_length          = 0;
 
 static char usb_tx_buffer[USB_TX_BUFFER_SIZE];
 static byte usb_tx_temp[USB_TX_BUFFER_SIZE];
 
 
-
-float logger_busy()
-{
-	return usb_tx_busy;
-}
-int GetSentCounter()
-{
-	return usb_sent_counter;
-}
-
-
 void logger_transmit_complete()
 {
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-	usb_sent_counter++;
 	usb_tx_busy = 0;
 }
 
@@ -49,17 +35,9 @@ void logger_send(const byte* data, int length)
 	{
 		send_length = buffer_position;
 
-//		int remainder = send_length % 64;
-//		if (remainder != 0)
-//		{
-//			int padding = 64 - remainder;
-//			memset(usb_tx_buffer + send_length, 0, padding);
-//			send_length += padding;
-//		}
-
 		memcpy(usb_tx_temp, usb_tx_buffer, send_length);
 
-		if( CDC_Transmit_FS(usb_tx_temp, send_length) == USBD_OK)
+		if(CDC_Transmit_FS(usb_tx_temp, send_length) == USBD_OK)
 		{
 			usb_tx_busy     = 1;
 			buffer_position = 0;

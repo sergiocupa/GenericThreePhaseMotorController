@@ -9,6 +9,7 @@ namespace WinFormsApp1
     {
 
         LogFrame Prev = new LogFrame();
+        bool First = true;
 
         private void Received(byte[] data)
         {
@@ -22,24 +23,20 @@ namespace WinFormsApp1
 
                 var first = values.FirstOrDefault();
 
-                //if(BufferCounter == 0)
-                //{
-                //    BufferCounter = first.Counter;
-                //}
-
                 label3.Invoke(() => 
                 { 
                     label3.Text = "Rec: " + Counter + " | Total: " + CountData + " | Freq.: " + first.Frequency + " | Tick: " + first.TicksByIteration + " | Jumps: " + BufferJumps;
-                    label3.Update();
+                    label3.Refresh();
                 });
 
                 var SerieR = Chart.GetSerie(2);
                 var SerieS = Chart.GetSerie(3);
                 var SerieT = Chart.GetSerie(4);
 
-                if (Prev.Counter > 0 && ((Prev.Counter + 1) != first.Counter))
+                if (First)
                 {
-                    BufferJumps += (first.Counter - (Prev.Counter + 1));
+                    Prev.Counter = first.Counter -1;
+                    First = false;
                 }
 
                 int dif = 0;
@@ -52,19 +49,8 @@ namespace WinFormsApp1
                     Chart.CreatePoint(SerieS, Motion, line.WaveS);
                     Chart.CreatePoint(SerieT, Motion, line.WaveT);
 
-                    Motion += line.MotionStep;
-
-                    if (Prev.Counter > 0 && ((Prev.Counter+1) != line.Counter))
-                    {
-                        BufferJumps += (line.Counter - (Prev.Counter + 1));
-                    }
-
-                    //if(line.Counter != (BufferCounter + 1))
-                    //{
-                    //    BufferJumps += line.Counter - BufferCounter;
-                    //}
-
-                    //BufferCounter = line.Counter;
+                    Motion      += line.MotionStep;
+                    BufferJumps += (line.Counter - (Prev.Counter + 1));
 
                     Prev = line;
                     ix++;
@@ -82,6 +68,9 @@ namespace WinFormsApp1
 
                     Serial = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
 
+                    Serial.ReadBufferSize  = 128000;
+                    Serial.WriteBufferSize = 128000;
+
                     Serial.DataReceived += (object sender, SerialDataReceivedEventArgs e) =>
                     {
                         var bytes = new byte[Serial.BytesToRead];
@@ -90,14 +79,13 @@ namespace WinFormsApp1
                     };
 
                     Serial.Open();
+                    button1.Enabled = false;
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
             }
-
-            button1.Enabled = false;
         }
 
         private void ArquivoButton_Click(object sender, EventArgs e)

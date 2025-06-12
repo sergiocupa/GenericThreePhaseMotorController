@@ -33,9 +33,6 @@ typedef struct _LoggerParam
 LoggerParam;
 
 
-
-int GetSentCounter();
-float logger_busy();
 void logger_init(LoggerCommunicationMode mode);
 void logger_send(const byte* data, int length);
 

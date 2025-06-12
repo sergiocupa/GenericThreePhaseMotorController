@@ -57,6 +57,12 @@ typedef struct _LogFrame
 	float WaveR;
 	float WaveS;
 	float WaveT;
+
+	// Padding bytes to align the structure size to 64 bytes
+	uint Pad1;
+	uint Pad2;
+	byte Pad3;
+	byte Pad4;
 }
 __attribute__((packed)) LogFrame;
 
@@ -68,11 +74,11 @@ void logger_voltages(float va, float vb, float vc)
 	if (CurrentFrame.Counter == UINT64_MAX) CurrentFrame.Counter = 0;
 	CurrentFrame.Counter++;
 
-	CurrentFrame.TicksByIteration = GetSentCounter();// logger_get_counter();
+	//CurrentFrame.TicksByIteration = GetSentCounter();// logger_get_counter();
 
 	CurrentFrame.Adc01      = current_values[0];
 	CurrentFrame.Adc02      = current_values[1];
-	CurrentFrame.Adc03      = logger_busy();//current_values[2];
+	CurrentFrame.Adc03      = 0;
 	CurrentFrame.Frequency  = Frequency;
 	CurrentFrame.MotionStep = MotionStep;
 	CurrentFrame.Theta      = Theta;

@@ -18,11 +18,11 @@ namespace WinFormsApp1
                     Aguarde.Reset();
                 }
 
-                int ix = a.Length;
-                while (ix > 0)
+                int ix = 0;
+                while (ix < a.Length)
                 {
-                    ix--;
                     a[ix].Method(a[ix].Data);
+                    ix++;
                 }
             }
         }
