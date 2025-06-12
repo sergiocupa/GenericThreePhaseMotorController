@@ -31,11 +31,11 @@ ThreePhaseDriveData;
 
 
 void SystemClock_Config(void);
-//void MX_ADC1_Init(ADC_HandleTypeDef *hadc1);
-//void MX_ADC2_Init(ADC_HandleTypeDef *hadc2);
-//void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+void MX_ADC1_Init(ADC_HandleTypeDef *hadc1);
+void MX_ADC2_Init(ADC_HandleTypeDef *hadc2);
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void MX_TIM1_Init(void);
-//void MX_ADC_DMA_Init(ADC_HandleTypeDef *hadc1);
+void MX_ADC_DMA_Init(ADC_HandleTypeDef *hadc1);
 void MX_GPIO_Init(void);
 void Error_Handler(void);
 

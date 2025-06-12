@@ -142,17 +142,17 @@ void three_phase_drive_prepare(ThreePhaseDriveData *instance)
 
 	MX_GPIO_Init();
 
-	//ADC_HandleTypeDef hadc1 = {0};
-	//ADC_HandleTypeDef hadc2 = {0};
-	//MX_ADC1_Init(&hadc1);
-	//MX_ADC_DMA_Init(&hadc1);
-	//MX_ADC2_Init(&hadc2);
-//
-//    MX_TIM1_Init();
-//
-//
-//
-//	HAL_ADC_Start_DMA(&hadc1, instance->AdcCurrent, 1); // Inicia ADC1 com DMA (dual mode);
+	ADC_HandleTypeDef hadc1 = {0};
+	ADC_HandleTypeDef hadc2 = {0};
+	MX_ADC1_Init(&hadc1);
+	MX_ADC_DMA_Init(&hadc1);
+	MX_ADC2_Init(&hadc2);
+
+    MX_TIM1_Init();
+
+
+
+	HAL_ADC_Start_DMA(&hadc1, instance->AdcCurrent, 1); // Inicia ADC1 com DMA (dual mode);
 }
 
 
