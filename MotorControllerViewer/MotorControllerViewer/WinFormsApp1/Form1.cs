@@ -1,4 +1,5 @@
 using CapturaTestesGUI.Utils;
+using ProfitCapture.Utils;
 using System.IO.Ports;
 
 
@@ -10,6 +11,10 @@ namespace WinFormsApp1
 
         LogFrame Prev = new LogFrame();
         bool First = true;
+
+        float Adc1 = 0;
+        float Adc2 = 0;
+        float Freq = 0;
 
         private void Received(byte[] data)
         {
@@ -23,9 +28,18 @@ namespace WinFormsApp1
 
                 var first = values.FirstOrDefault();
 
+                var sum1 = values.Sum(a => a.Adc01) / values.Count;
+                var sum2 = values.Sum(a => a.Adc02) / values.Count;
+
+                Adc1 = MathFunc.Integrate(sum1, Adc1, 2, 1);
+                Adc2 = MathFunc.Integrate(sum2, Adc2, 2, 1);
+                Freq = MathFunc.Integrate(first.Frequency, Freq, 30, 1);
+
+                var cnt = AQueue.Count();
+
                 label3.Invoke(() => 
                 { 
-                    label3.Text = "Rec: " + Counter + " | Total: " + CountData + " | Freq.: " + first.Frequency + " | Tick: " + first.TicksByIteration + " | Jumps: " + BufferJumps;
+                    label3.Text = "Cnt: "+ cnt + " | Rec: " + Counter + " | Total: " + CountData + " | Freq.: " + Freq.ToString("0.0") + " | ADC 1 2: " + Adc1.ToString("0.000") + " " + Adc2.ToString("0.000") + " | Jumps: " + BufferJumps;
                     label3.Refresh();
                 });
 
@@ -49,7 +63,7 @@ namespace WinFormsApp1
                     Chart.CreatePoint(SerieS, Motion, line.WaveS);
                     Chart.CreatePoint(SerieT, Motion, line.WaveT);
 
-                    Motion      += line.MotionStep;
+                    Motion += line.MotionStep;
                     BufferJumps += (line.Counter - (Prev.Counter + 1));
 
                     Prev = line;
@@ -283,7 +297,7 @@ namespace WinFormsApp1
 
             AQueue = new ActionQueue<byte[]>();
 
-            Chart = new ChartControl() { Dock = DockStyle.Fill };
+            Chart = new ChartControl() { Dock = DockStyle.Fill, RemoveNonVisible = true };
             panel2.Controls.Add(Chart);
 
             AddressTitles = JsonLoader.Load<List<AdrressInfo>>();

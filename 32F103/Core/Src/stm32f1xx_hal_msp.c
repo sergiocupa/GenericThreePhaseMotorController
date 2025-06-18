@@ -20,46 +20,90 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-/* USER CODE BEGIN Includes */
 
-/* USER CODE END Includes */
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
+DMA_HandleTypeDef hdma_adc1;
+DMA_HandleTypeDef hdma_adc2;
 
-/* USER CODE END TD */
+void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if(hadc->Instance==ADC1)
+  {
+    __HAL_RCC_ADC1_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN Define */
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-/* USER CODE END Define */
+    hdma_adc1.Instance = DMA1_Channel1;
+    hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_adc1.Init.Mode = DMA_CIRCULAR;
+    hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_adc1) != HAL_OK)
+    {
+      Error_Handler();
+    }
 
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN Macro */
+    __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc1);
+  }
+  else if(hadc->Instance==ADC2)
+  {
+	  __HAL_RCC_ADC2_CLK_ENABLE();
+	  __HAL_RCC_GPIOA_CLK_ENABLE();
 
-/* USER CODE END Macro */
+	  GPIO_InitStruct.Pin = GPIO_PIN_2;
+	  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
+	  hdma_adc2.Instance                 = DMA1_Channel2; // DMA1_Channel2 é o canal para ADC2 no F103
+	  hdma_adc2.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+	  hdma_adc2.Init.PeriphInc           = DMA_PINC_DISABLE;
+	  hdma_adc2.Init.MemInc              = DMA_MINC_ENABLE;
+	  hdma_adc2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+	  hdma_adc2.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
+	  hdma_adc2.Init.Mode                = DMA_CIRCULAR;
+	  hdma_adc2.Init.Priority            = DMA_PRIORITY_LOW; // Ou DMA_PRIORITY_HIGH se for mais crítico
 
-/* USER CODE END PV */
+	  if (HAL_DMA_Init(&hdma_adc2) != HAL_OK)
+	  {
+		Error_Handler();
+	  }
 
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
+	  __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc2);
+  }
 
-/* USER CODE END PFP */
+}
 
-/* External functions --------------------------------------------------------*/
-/* USER CODE BEGIN ExternalFunctions */
-
-/* USER CODE END ExternalFunctions */
-
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 /**
-  * Initializes the Global MSP.
+  * @brief ADC MSP De-Initialization
+  * This function freeze the hardware resources used in this example
+  * @param hadc: ADC handle pointer
+  * @retval None
   */
+void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
+{
+  if(hadc->Instance==ADC1)
+  {
+    __HAL_RCC_ADC1_CLK_DISABLE();
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1);
+    HAL_DMA_DeInit(hadc->DMA_Handle);
+  }
+  else if(hadc->Instance==ADC2)
+  {
+	  __HAL_RCC_ADC2_CLK_DISABLE();
+	  HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2);
+	  HAL_DMA_DeInit(hadc->DMA_Handle);
+  }
+
+}
+
+
 void HAL_MspInit(void)
 {
 

@@ -19,6 +19,8 @@
 #define PI_2           6.28318f
 #define SQUARE_3       1.73205f
 
+#define ADC_BUFFER_SIZE 1
+
 
 typedef void (*TransmissionCompletedCallback) (uint8_t *Buf, uint32_t *Len, uint8_t epnum);
 
@@ -29,6 +31,10 @@ typedef struct _ThreePhaseDriveData
 }
 ThreePhaseDriveData;
 
+//extern ADC_HandleTypeDef Hadc1;
+
+extern DMA_HandleTypeDef hdma_adc1;
+extern DMA_HandleTypeDef hdma_adc2;
 
 void SystemClock_Config(void);
 void MX_ADC1_Init(ADC_HandleTypeDef *hadc1);
@@ -38,6 +44,16 @@ void MX_TIM1_Init(void);
 void MX_ADC_DMA_Init(ADC_HandleTypeDef *hadc1);
 void MX_GPIO_Init(void);
 void Error_Handler(void);
+void MX_GPIOA_Init(void);
+
+void  _DMA_Init();
+void _ADC1_Init();
+void _ADC2_Init();
+
+void get_adc_1_2(uint32_t values[2]);
+
+
+void __adc_init();
 
 
 

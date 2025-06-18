@@ -148,7 +148,7 @@ namespace WinFormsApp1
 
                     int ix = 0;
                     double prev_x = 0, prev_y = 0;
-                    if(first.Index > 0)
+                    if(first.Index > 0 && first.Index < (ulong)serie.Points.Count)
                     {
                         PointChart before = null;
                         lock (ChartLock)

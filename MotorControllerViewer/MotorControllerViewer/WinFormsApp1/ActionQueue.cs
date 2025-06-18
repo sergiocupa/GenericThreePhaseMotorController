@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace WinFormsApp1
 {
     internal class ActionQueue<TData>
@@ -55,6 +57,13 @@ namespace WinFormsApp1
         {
             Rodando = false;
             if (Aguarde != null) Aguarde.Set();
+        }
+
+        public int Count()
+        {
+            var cnt = 0;
+            lock (Lock) { cnt = Fila.Count; }
+            return cnt;
         }
 
 

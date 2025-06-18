@@ -9,26 +9,11 @@
 #include "three_phase_drive_preparer.h"
 #include "logger.h"
 
+ADC_HandleTypeDef Hadc1    = {0};
+ADC_HandleTypeDef Hadc2    = {0};
 
-DMA_HandleTypeDef hdma_adc1 = {0};
-
-
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
+int Adc1Buffer[ADC_BUFFER_SIZE]; // Buffer para ADC1 (PA1)
+int Adc2Buffer[ADC_BUFFER_SIZE]; // Buffer para ADC2 (PA2)
 
 
 
@@ -83,8 +68,10 @@ void SystemClock_Config(void)
 	/* 4) CONFIGURA PRESCALER DO ADC EM /6 → 72/6 = 12 MHz */
 	/* limpa e seta o campo ADCPRE em RCC->CFGR */
 	//__HAL_RCC_ADCPCLK_ENABLE(); /* habilita escrita, se necessário */
+	__HAL_RCC_ADC1_CLK_ENABLE();
+	__HAL_RCC_ADC2_CLK_ENABLE();
     RCC->CFGR &= ~RCC_CFGR_ADCPRE;
-	RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;
+	RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;//  RCC_CFGR_ADCPRE_DIV6;
 
 
 	/* 4) Configure SysTick for 1 ms interrupts (for HAL) */
@@ -95,52 +82,6 @@ void SystemClock_Config(void)
 	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-
-void MX_ADC1_Init(ADC_HandleTypeDef *hadc1)
-{
-    ADC_MultiModeTypeDef multimode    = {0};
-	ADC_ChannelConfTypeDef sConfig    = {0};
-
-	hadc1->Instance                   = ADC1;
-	hadc1->Init.ScanConvMode          = ADC_SCAN_DISABLE;
-	hadc1->Init.ContinuousConvMode    = ENABLE;
-	hadc1->Init.DiscontinuousConvMode = DISABLE;
-	hadc1->Init.ExternalTrigConv      = ADC_SOFTWARE_START;
-	hadc1->Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-	hadc1->Init.NbrOfConversion       = 1;
-	HAL_ADC_Init(hadc1);
-
-	// Configura canal PA1 - ADC1_IN1
-	sConfig.Channel                   = ADC_CHANNEL_1;
-	sConfig.Rank                      = ADC_REGULAR_RANK_1;
-	sConfig.SamplingTime              = ADC_SAMPLETIME_28CYCLES_5;
-	HAL_ADC_ConfigChannel(hadc1, &sConfig);
-
-	// Ativa modo dual com ADC2 simultâneo
-	multimode.Mode = ADC_DUALMODE_REGSIMULT;
-	HAL_ADCEx_MultiModeConfigChannel(hadc1, &multimode);
-}
-
-
-void MX_ADC2_Init(ADC_HandleTypeDef *hadc2)
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-
-	hadc2->Instance                   = ADC2;
-	hadc2->Init.ScanConvMode          = ADC_SCAN_DISABLE;
-	hadc2->Init.ContinuousConvMode    = ENABLE;
-	hadc2->Init.DiscontinuousConvMode = DISABLE;
-	hadc2->Init.ExternalTrigConv      = ADC_SOFTWARE_START;
-	hadc2->Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-	hadc2->Init.NbrOfConversion       = 1;
-	HAL_ADC_Init(hadc2);
-
-	// Configura canal PA2 - ADC2_IN2
-	sConfig.Channel      = ADC_CHANNEL_2;
-	sConfig.Rank         = ADC_REGULAR_RANK_1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES_5;
-	HAL_ADC_ConfigChannel(hadc2, &sConfig);
-}
 
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim)
@@ -223,31 +164,11 @@ void MX_TIM1_Init(void)
 
 
 
-void MX_ADC_DMA_Init(ADC_HandleTypeDef *hadc1)
-{
-	__HAL_RCC_DMA1_CLK_ENABLE();
-
-	hdma_adc1.Instance                 = DMA1_Channel1;
-	hdma_adc1.Init.Direction           = DMA_PERIPH_TO_MEMORY;
-	hdma_adc1.Init.PeriphInc           = DMA_PINC_DISABLE;
-	hdma_adc1.Init.MemInc              = DMA_MINC_DISABLE;// DISABLE: Atribui a ultima leitura ao buffer | ENABLE: Acumula em fila circular no buffer do DMA
-	hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-	hdma_adc1.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
-	hdma_adc1.Init.Mode                = DMA_CIRCULAR;
-	hdma_adc1.Init.Priority            = DMA_PRIORITY_HIGH;
-
-	HAL_DMA_Init(&hdma_adc1);
-
-	__HAL_LINKDMA(hadc1, DMA_Handle, hdma_adc1);
-}
-
-
 void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
@@ -259,23 +180,134 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
 
-
-
-void Error_Handler(void)
+void MX_GPIOA_Init(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-	  HAL_Delay(500); // 500 ms
-  }
-  /* USER CODE END Error_Handler_Debug */
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    // Configurar PA1 como Analógico
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    // Se usar PA2 para o ADC2 também:
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 
 
+void Error_Handler(void)
+{
+  __disable_irq();
+  int ix = 0;
+  while (ix < 3)
+  {
+	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
+	  HAL_Delay(100);
+	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
+	  HAL_Delay(10);
+	  ix++;
+  }
+}
 
 
+void get_adc_1_2(uint32_t values[2])
+{
+	values[0] = Adc1Buffer[0];// & 0xFFFF;
+	values[1] = Adc2Buffer[0];// >> 16) & 0xFFFF;
+}
+
+
+void __adc_gpio_init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+
+	GPIO_InitStruct.Pin = GPIO_PIN_1 | GPIO_PIN_2;
+	GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+
+void __adc_dma_init()
+{
+	  __HAL_RCC_DMA1_CLK_ENABLE();
+}
+
+void __adc1_init(void)
+{
+	  ADC_ChannelConfTypeDef sConfig = {0};
+
+	  Hadc1.Instance = ADC1;
+	  Hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
+	  Hadc1.Init.ContinuousConvMode = ENABLE;
+	  Hadc1.Init.DiscontinuousConvMode = DISABLE;
+	  Hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+	  Hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	  Hadc1.Init.NbrOfConversion = 1;
+	  if (HAL_ADC_Init(&Hadc1) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+
+	  sConfig.Channel = ADC_CHANNEL_1;
+	  sConfig.Rank = ADC_REGULAR_RANK_1;
+	  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;// Para controle FOC, ajustar aqui. Tambem verificar sincronizacao das amostras com PWM
+	  if (HAL_ADC_ConfigChannel(&Hadc1, &sConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+}
+
+void __adc2_init(void)
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+
+	  Hadc2.Instance = ADC2;
+	  Hadc2.Init.ScanConvMode = ADC_SCAN_ENABLE;
+	  Hadc2.Init.ContinuousConvMode = ENABLE;
+	  Hadc2.Init.DiscontinuousConvMode = DISABLE;
+	  Hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+	  Hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	  Hadc2.Init.NbrOfConversion = 1;
+	  if (HAL_ADC_Init(&Hadc2) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+
+	  sConfig.Channel = ADC_CHANNEL_2;
+	  sConfig.Rank = ADC_REGULAR_RANK_1;
+	  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+	  if (HAL_ADC_ConfigChannel(&Hadc2, &sConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+}
+
+
+// Embarcar funcoes de inicializacao, para evitar que o cube nao altere
+
+
+void __adc_init(void)
+{
+	__adc_gpio_init();
+	__adc_dma_init();
+	__adc1_init();
+	__adc2_init();
+
+	if (HAL_ADC_Start_DMA(&Hadc1, (uint32_t*)Adc1Buffer, ADC_BUFFER_SIZE) != HAL_OK)
+	{
+	    Error_Handler();
+	}
+
+	if (HAL_ADC_Start_DMA(&Hadc2, (uint32_t*)Adc2Buffer, ADC_BUFFER_SIZE) != HAL_OK)
+	{
+		Error_Handler();
+	}
+}
 

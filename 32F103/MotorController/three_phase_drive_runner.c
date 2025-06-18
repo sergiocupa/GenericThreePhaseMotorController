@@ -74,6 +74,8 @@ void logger_voltages(float va, float vb, float vc)
 	if (CurrentFrame.Counter == UINT64_MAX) CurrentFrame.Counter = 0;
 	CurrentFrame.Counter++;
 
+	get_adc_1_2(current_values);
+
 	//CurrentFrame.TicksByIteration = GetSentCounter();// logger_get_counter();
 
 	CurrentFrame.Adc01      = current_values[0];
@@ -101,11 +103,7 @@ static inline void DWT_Init(void)
 }
 
 
-void get_adc_1_2(uint32_t values[2])
-{
-	values[0] = Instance->AdcCurrent[0] & 0xFFFF;
-	values[1] = (Instance->AdcCurrent[0] >> 16) & 0xFFFF;
-}
+
 
 
 float get_frequency(float y)
@@ -140,19 +138,27 @@ void three_phase_drive_prepare(ThreePhaseDriveData *instance)
 
 	logger_init(LOGGER_COMM_USB);
 
+
 	MX_GPIO_Init();
 
-	ADC_HandleTypeDef hadc1 = {0};
-	ADC_HandleTypeDef hadc2 = {0};
-	MX_ADC1_Init(&hadc1);
-	MX_ADC_DMA_Init(&hadc1);
-	MX_ADC2_Init(&hadc2);
+
+	__adc_init();
+	//_DMA_Init();
+	//_ADC1_Init();
+	//_ADC2_Init();
+
+//	MX_GPIOA_Init();
+//	ADC_HandleTypeDef hadc1 = {0};
+//	//ADC_HandleTypeDef hadc2 = {0};
+//	MX_ADC1_Init(&hadc1);
+//	MX_ADC_DMA_Init(&hadc1);
+//	//MX_ADC2_Init(&hadc2);
+
 
     MX_TIM1_Init();
 
-
-
-	HAL_ADC_Start_DMA(&hadc1, instance->AdcCurrent, 1); // Inicia ADC1 com DMA (dual mode);
+    //HAL_ADC_Start_DMA(&Hadc1, instance->AdcCurrent, 2);
+    //HAL_ADCEx_MultiModeStart_DMA(&Hadc1, instance->AdcCurrent, 1); // Inicia ADC1 com DMA (dual mode);
 }
 
 
@@ -168,10 +174,6 @@ void three_phase_drive_run(ThreePhaseDriveData *instance)
 
 	while (1)
 	{
-		//HAL_Delay(1);
-		//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-		//HAL_Delay(50);
-
 		get_adc_1_2(current_values);
 
 		// 01. Avancar rotor. Se usar encoder ou pulso externo, entao avancar por algumas destas referencias
@@ -228,3 +230,7 @@ void three_phase_drive_run(ThreePhaseDriveData *instance)
 		//TIM1->CCR3 = (vc + 1.0) * PWM_PERIOD / 2;
 	}
 }
+
+
+
+
